@@ -7,6 +7,10 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
 use Slim\Routing\RouteCollectorProxy;
+require_once './controllers/UsuarioController.php';
+require_once './db/AccesoDatos.php';
+
+
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -19,29 +23,21 @@ $app->addErrorMiddleware(true, true, true);
 // Add parse body
 $app->addBodyParsingMiddleware();
 
-// Routes
-$app->get('[/]', function (Request $request, Response $response) {
-    $payload = json_encode(array('method' => 'GET', 'msg' => "Bienvenido a SlimFramework 2023"));
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
+$app->group('/', function (RouteCollectorProxy $group) {
+
+    $group->get('[/]', function (Request $request, Response $response) {
+        $response->getBody()->write("Bienvenido a la api de la comanda");
+        return $response;
+    });
 });
 
-$app->get('/test', function (Request $request, Response $response) {
-    $payload = json_encode(array('method' => 'GET', 'msg' => "Bienvenido a SlimFramework 2023"));
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
-});
 
-$app->post('[/]', function (Request $request, Response $response) {
-    $payload = json_encode(array('method' => 'POST', 'msg' => "Bienvenido a SlimFramework 2023"));
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
-});
 
-$app->post('/test', function (Request $request, Response $response) {
-    $payload = json_encode(array('method' => 'POST', 'msg' => "Bienvenido a SlimFramework 2023"));
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
-});
+$app->group('/usuarios', function (RouteCollectorProxy $group) {
+    // $group->get('[/]', \UsuarioController::class . ':TraerTodos');
+    // $group->get('/{usuario}', \UsuarioController::class . ':TraerUno');
+    $group->post('[/]', \UsuarioController::class . ':POST_InsertarUsuario');
+  });
 
+// Run app
 $app->run();
