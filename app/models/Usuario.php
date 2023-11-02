@@ -10,44 +10,36 @@ class Usuario
     public $tipo;
 
 
-    public function __construct($nombre, $apellido, $tipo)
-    {
-        $this->nombre = $nombre;
-        $this->apellido = $apellido;
-        $this->tipo = $tipo;
-    }
+    // public function __construct($nombre, $apellido, $tipo)
+    // {
+    //     $this->nombre = $nombre;
+    //     $this->apellido = $apellido;
+    //     $this->tipo = $tipo;
+    // }
 
 
     public function CrearUsuario()
     {
-        $accesoDato = AccesoDatos::obtenerInstancia();
-        $consulta = $accesoDato->prepararConsulta("INSERT INTO usuario (nombre, apellido, tipo) VALUES (:nombre, :apellido, :tipo)");
-    
-        // Asigna los valores a los marcadores de posición en la consulta
-        $consulta->bindParam(':nombre', $this->nombre);
-        $consulta->bindParam(':apellido', $this->apellido);
-        $consulta->bindParam(':tipo', $this->tipo);
-    
-        // Ejecuta la consulta
+        $objAccesoDatos = AccesoDatos::obtenerInstancia();
+        $consulta = $objAccesoDatos->prepararConsulta("INSERT INTO usuario (nombre, apellido, tipo) VALUES (:nombre, :apellido, :tipo)");
+        //  $claveHash = password_hash($this->clave, PASSWORD_DEFAULT);
+        $consulta->bindValue(':nombre', $this->nombre, PDO::PARAM_STR);
+        $consulta->bindValue(':apellido', $this->apellido, PDO::PARAM_STR);
+        $consulta->bindValue(':tipo', $this->tipo, PDO::PARAM_STR);
         $consulta->execute();
-    
-        return $accesoDato->obtenerUltimoId();
+
+        return $objAccesoDatos->obtenerUltimoId();
     }
 
 
-    // public function TraerUsuarios()
-    // {
-    //     $objetoAccesoDato = AccesoDatos::dameUnObjetoAcceso();
-    //     $consulta = $objetoAccesoDato->RetornarConsulta("SELECT * FROM usuario");
-    //     $consulta->execute();
-    //     $usuarios = array();
-    //     $arrayObtenido = $consulta->fetchAll(PDO::FETCH_OBJ);
-    //     foreach ($arrayObtenido as $i) {
-    //         $usuario = array($i->id, $i->nombre, $i->apellido, $i->tipo);
-    //         $usuarios[] = $usuario;
-    //     }
-    //     return $usuarios;
-    // }
+    public static function TraerUsuarios()
+    {
+        $objAccesoDatos = AccesoDatos::obtenerInstancia();
+        $consulta = $objAccesoDatos->prepararConsulta("SELECT * FROM usuario");
+        $consulta->execute();
+
+        return $consulta->fetchAll(PDO::FETCH_CLASS, 'Usuario');
+    }
 }
 
 ?>

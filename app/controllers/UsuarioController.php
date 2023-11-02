@@ -1,50 +1,42 @@
 <?php
 
 require_once './models/Usuario.php';
-class UsuarioController
+class UsuarioController extends Usuario
 {
 
-    public static function POST_InsertarUsuario($request, $response, $args)
+    public static function InsertarUsuarioController($request, $response, $args)
     {
-        $param = $request->getQueryParams();
-        // if (!isset($param['token'])) {
-        $retorno = json_encode(array("mensaje" => "Token necesario"));
-        //    } else {
-        //  $token = $param['token'];
-        //  $respuesta = Autenticador::ValidarToken($token, "Admin");
-        //  if ($respuesta == "Validado") {
         $parametros = $request->getParsedBody();
+
         $nombre = $parametros['nombre'];
         $apellido = $parametros['apellido'];
         $tipo = $parametros['tipo'];
 
-        $user = new Usuario($nombre, $apellido, $tipo);
-        $ok = $user->CrearUsuario();
-        if ($ok != null) {
-            $retorno = json_encode(array("mensaje" => "Usuario creado con exito"));
-        } else {
-            $retorno = json_encode(array("mensaje" => "No se pudo crear"));
-        }
-        //   } else {
-        //      $retorno = json_encode(array("mensaje" => $respuesta));
-        //     }
-        //   }
-        $response->getBody()->write($retorno);
-        return $response;
+
+        // Creamos el usuario
+        $usr = new Usuario();
+        $usr->nombre = $nombre;
+        $usr->apellido = $apellido;
+        $usr->tipo = $tipo;
+        $usr->crearUsuario();
+
+        $payload = json_encode(array("mensaje" => "Usuario creado con exito"));
+
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
 
-    // public function altaUsuario($request, $response, $args) {
-    //     $data = $request->getParsedBody();
-    //     $usuario = new Usuario($data['id'], $data['nombre'], $data['apellido'], $data['tipo']);
-    //     $response->getBody()->write(json_encode($usuario->CrearUsuario()));
-    //     return $response;
-    // }
 
-    // public function traerUsuarios($request, $response, $args) {
-    //     $response->getBody()->write(json_encode(Usuario::TraerUsuarios()));
-    //     return $response;
-    // }
+    public function TraerUsuariosController($request, $response, $args)
+    {
+        $usuarios = Usuario::TraerUsuarios();
+
+        $payload = json_encode(array("listaUsuarios" => $usuarios));
+        $response->getBody()->write($payload);
+        return $response
+            ->withHeader('Content-Type', 'application/json');
+    }
 }
 
 

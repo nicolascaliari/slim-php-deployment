@@ -1,6 +1,6 @@
 <?php
 
-interface IAUsuario
+interface interfaceGeneral
 {
 
     public function findAll();
