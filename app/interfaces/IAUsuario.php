@@ -3,11 +3,11 @@
 interface interfaceGeneral
 {
 
-    public function findAll();
-    public function findOne();
-    public function create();
-    public function update();
-    public function delete();
+    public function TraerTodo();
+    public function TraerUno();
+    public function Crear();
+    public function Actualizar();
+    public function Eliminar();
 }
 
 ?>
