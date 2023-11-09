@@ -13,7 +13,7 @@ require_once './controllers/ProductoController.php';
 require_once './controllers/MesaController.php';
 require_once './controllers/PedidosController.php';
 require_once './db/AccesoDatos.php';
-
+require_once './middlewares/LoggerMiddleware.php';
 
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -40,7 +40,7 @@ $app->group('/', function (RouteCollectorProxy $group) {
 $app->group('/usuarios', function (RouteCollectorProxy $group) {
     $group->get('[/]', \UsuarioController::class . ':TraerUsuariosController');
     // $group->get('/{usuario}', \UsuarioController::class . ':TraerUno');
-    $group->post('[/]', \UsuarioController::class . ':InsertarUsuarioController');
+    $group->post('[/]', \UsuarioController::class . ':InsertarUsuarioController')->add(new LogeerMidleware());
 });
 
 
@@ -65,6 +65,7 @@ $app->group('/pedidos', function (RouteCollectorProxy $group) {
     $group->get('[/]', \PedidosController::class . ':TraerPedidos');
     // $group->get('/{usuario}', \UsuarioController::class . ':TraerUno');
     $group->post('[/]', \PedidosController::class . ':InsertarPedido');
+    $group->post('/cambiarEstado', \PedidosController::class . ':CambiarEstadoPedido');
 });
 
 // Run app

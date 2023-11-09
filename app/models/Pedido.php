@@ -6,17 +6,18 @@ class Pedido
     public $idMozo;
     public $idMesa;
     public $descripcionPedido;
+    public $estado;
 
 
     public function CrearPedido()
     {
         $objAccesoDatos = AccesoDatos::obtenerInstancia();
-        $consulta = $objAccesoDatos->prepararConsulta("INSERT INTO pedidos (idMozo, idMesa, descripcionPedido) VALUES (:idMozo, :idMesa, :descripcionPedido)");
+        $consulta = $objAccesoDatos->prepararConsulta("INSERT INTO pedidos (idMozo, idMesa, descripcionPedido, estado) VALUES (:idMozo, :idMesa, :descripcionPedido, :estado)");
 
         $consulta->bindValue(':idMozo', $this->idMozo, PDO::PARAM_INT);
         $consulta->bindValue(':idMesa', $this->idMesa, PDO::PARAM_INT);
         $consulta->bindValue(':descripcionPedido', $this->descripcionPedido, PDO::PARAM_STR);
-
+        $consulta->bindValue(':estado', $this->estado, PDO::PARAM_STR);
         $consulta->execute();
     }
 
@@ -60,6 +61,16 @@ class Pedido
         } else {
             return false;
         }
+    }
+
+
+    public function CambiarEstadoPedido($estado)
+    {
+        $objetoAccesoDato = AccesoDatos::obtenerInstancia();
+        $consulta = $objetoAccesoDato->prepararConsulta("update pedidos set estado = ? where id = ?");
+        $consulta->bindValue(1, $estado, PDO::PARAM_INT);
+        $consulta->bindValue(2, $this->id, PDO::PARAM_INT);
+        return $consulta->execute();
     }
 }
 
