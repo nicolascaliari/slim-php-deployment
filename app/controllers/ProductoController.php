@@ -10,6 +10,7 @@ class ProductoController extends Producto
         $nombre = $parametros['nombre'];
         $precio = $parametros['precio'];
         $sector = $parametros['sector'];
+        $tiempoDePreparacion = $parametros['tiempoDePreparacion'];
 
 
         // Creamos el usuario
@@ -17,6 +18,7 @@ class ProductoController extends Producto
         $producto->nombre = $nombre;
         $producto->precio = $precio;
         $producto->sector = $sector;
+        $producto->tiempoDePreparacion = $tiempoDePreparacion;
 
         $producto->CraerProducto();
 

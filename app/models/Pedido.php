@@ -7,17 +7,19 @@ class Pedido
     public $idMesa;
     public $descripcionPedido;
     public $estado;
+    public $tiempoEstimado;
 
 
     public function CrearPedido()
     {
         $objAccesoDatos = AccesoDatos::obtenerInstancia();
-        $consulta = $objAccesoDatos->prepararConsulta("INSERT INTO pedidos (idMozo, idMesa, descripcionPedido, estado) VALUES (:idMozo, :idMesa, :descripcionPedido, :estado)");
+        $consulta = $objAccesoDatos->prepararConsulta("INSERT INTO pedidos (idMozo, idMesa, descripcionPedido, estado, tiempoEstimado) VALUES (:idMozo, :idMesa, :descripcionPedido, :estado, :tiempoEstimado)");
 
         $consulta->bindValue(':idMozo', $this->idMozo, PDO::PARAM_INT);
         $consulta->bindValue(':idMesa', $this->idMesa, PDO::PARAM_INT);
         $consulta->bindValue(':descripcionPedido', $this->descripcionPedido, PDO::PARAM_STR);
         $consulta->bindValue(':estado', $this->estado, PDO::PARAM_STR);
+        $consulta->bindValue(':tiempoEstimado', $this->tiempoEstimado, PDO::PARAM_STR);
         $consulta->execute();
     }
 
@@ -72,6 +74,8 @@ class Pedido
         $consulta->bindValue(2, $this->id, PDO::PARAM_INT);
         return $consulta->execute();
     }
+
+
 }
 
 
