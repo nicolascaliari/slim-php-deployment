@@ -29,13 +29,52 @@ class ProductoController extends Producto
     }
 
 
-    public static function TraerProductosController($request, $response, $args) {
-        $productos  = Producto::TraerProductos();
-    
+    public static function TraerProductosController($request, $response, $args)
+    {
+        $productos = Producto::TraerProductos();
+
         $payload = json_encode(array("listaProductos" => $productos));
         $response->getBody()->write($payload);
         return $response
             ->withHeader('Content-Type', 'application/json');
+    }
+
+
+    public function BajaProducto($request, $response, $args)
+    {
+        $parametros = $request->getParsedBody();
+        $id = $parametros['id'];
+        $producto = Producto::TraerProducto_Id($id);
+        if ($producto) {
+            if (Producto::EliminarProducto($id)) {
+                $payload = json_encode(array("mensaje" => "Producto eliminado con exito"));
+            }
+        } else {
+            $payload = json_encode(array("mensaje" => "Error en eliminar Producto"));
+        }
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function ModificarProductoController($request, $response, $args)
+    {
+        $parametros = $request->getParsedBody();
+        $id = $parametros['id'];
+        $producto = Producto::TraerProducto_Id($id);
+        if ($producto) {
+            $producto->nombre = $parametros['nombre']; 
+            $producto->sector = $parametros['sector'];
+            $producto->precio = $parametros['precio'];
+            $producto->tiempoDePreparacion = $parametros['tiempoDePreparacion'];
+            //var_dump($producto->tiempoDePreparacion);
+
+            Producto::ModificarProducto($id, $producto->nombre, $producto->sector, $producto->precio, $producto->tiempoDePreparacion);
+            $payload = json_encode(array("mensaje" => "Producto modificado con exito"));
+        } else {
+            $payload = json_encode(array("mensaje" => "Error en modificar Producto"));
+        }
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json');
     }
 }
 
