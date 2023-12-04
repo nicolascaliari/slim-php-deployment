@@ -13,10 +13,14 @@ require_once './controllers/ProductoController.php';
 require_once './controllers/MesaController.php';
 require_once './controllers/PedidosController.php';
 require_once './db/AccesoDatos.php';
-require_once './middlewares/LoggerMiddleware.php';
 
-require_once(__DIR__ . '/./middlewares/AuthMiddleware.php');
-require_once(__DIR__ . '/./middlewares/LoggerMiddleware.php');
+
+require_once(__DIR__ . '/./middlewares/AuthMozoMW.php');
+require_once(__DIR__ . '/./middlewares/AuthSocioMW.php');
+require_once(__DIR__ . '/./middlewares/AuthMW.php');
+require_once(__DIR__ . '/./middlewares/EstadoYTiempoProducto.php');
+require_once(__DIR__ . '/./utils/autenticadorJWT.php');
+
 
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -31,73 +35,62 @@ $app->addErrorMiddleware(true, true, true);
 $app->addBodyParsingMiddleware();
 
 
-$app->group('/auth', function (RouteCollectorProxy $group) {
-    $group->post('/login', \UsuarioController::class . ':login');
+
+
+$app->group('/usuarios', function (RouteCollectorProxy $group)
+{
+    $group->get('[/]', \UsuarioController::class . ':TraerTodos')->add(new AuthSocioMW());
+    $group->get('/CargarUsuarios', \UsuarioController::class . ':CargarUsuariosEnCSV')->add(new AuthSocioMW());
+    $group->get('/DescargarUsuarios', \UsuarioController::class . ':DescargarUsuariosDesdeCSV')->add(new AuthSocioMW());
+    $group->post('[/]', \UsuarioController::class . ':CargarUno')->add(new AuthSocioMW());
+    $group->put('[/]', \UsuarioController::class . ':ModificarUno')->add(new AuthSocioMW());
+    $group->delete('[/{idUsuario}]', \UsuarioController::class . ':BorrarUno')->add(new AuthSocioMW());
+})->add(new AuthMW());
+
+$app->group('/mesas', function (RouteCollectorProxy $group)
+{
+    $group->get('[/]', \MesaController::class . ':TraerTodos')->add(new AuthMozoMW());
+    $group->get('/MasUsada', \MesaController::class . ':TraerMesaMasUsada')->add(new AuthSocioMW());
+    $group->get('/MejoresComentarios', \MesaController::class . ':TraerMejoresComentarios')->add(new AuthSocioMW());
+    $group->post('[/]', \MesaController::class . ':CargarUno')->add(new AuthSocioMW());
+    $group->put('[/]', \MesaController::class . ':ModificarUno')->add(new AuthMozoMW());
+    $group->put('/CerrarMesa', \MesaController::class . ':SocioCierraMesa')->add(new AuthSocioMW());
+    $group->delete('[/{idMesa}]', \MesaController::class . ':BorrarUno')->add(new AuthSocioMW());
+})->add(new AuthMW());
+
+$app->group('/productos', function (RouteCollectorProxy $group)
+{
+    $group->get('[/]', \ProductoController::class . ':TraerTodos'); //->add(new AuthMozoMW());
+    $group->get('/TraerTodosSegunEstado', \ProductoController::class . ':TraerProductosSegunEstado');
+    $group->post('[/]', \ProductoController::class . ':CargarUno'); //->add(new AuthMozoMW());
+    $group->put('[/]', \ProductoController::class . ':ModificarUno');//->add(new AuthMozoMW());
+    $group->put('/EmpleadoTomaProducto', \ProductoController::class . ':EmpleadoTomaProducto');//->add(new EstadoYTiempoProductoMW());
+    $group->put('/EmpleadoAlistaProducto', \ProductoController::class . ':EmpleadoAlistaProducto');//->add(new EstadoYTiempoProductoMW());
+    $group->delete('[/{idProducto}]', \ProductoController::class . ':BorrarUno');//->add(new AuthSocioMW());
 });
+//->add(new AuthMW());
 
-
-$app->group('/', function (RouteCollectorProxy $group) {
-
-    $group->get('[/]', function (Request $request, Response $response) {
-        $response->getBody()->write("Bienvenido a la api de la comanda");
-        return $response;
-    });
+$app->group('/pedidos', function (RouteCollectorProxy $group)
+{
+    $group->get('[/]', \PedidoController::class . ':TraerTodos');
+    $group->get('/TraerTodosSegunEstado', \PedidoController::class . ':TraerPedidosSegunEstado');
+    $group->post('[/]', \PedidoController::class . ':CargarUno');
+    $group->put('[/]', \PedidoController::class . ':ModificarUno');
+    $group->put('/MozoPedidoCliente', \PedidoController::class . ':MozoPedidoCliente');
+    $group->delete('[/{idPedido}]', \PedidoController::class . ':BorrarUno');
 });
+//->add(new AuthMW())->add(new AuthMozoMW());
 
-
-
-$app->group('/usuarios', function (RouteCollectorProxy $group) {
-    $group->get('[/]', \UsuarioController::class . ':TraerUsuariosController')
-        ->add(new LoggerMidleware())
-        ->add(new AuthMiddleware('admin'));
-
-    $group->post('/insertar', \UsuarioController::class . ':InsertarUsuarioController')
-        ->add(new LoggerMidleware())
-        ->add(new AuthMiddleware('admin'));
-
-    $group->delete('/eliminar', \UsuarioController::class . ':EliminarUsuarioController')
-        ->add(new LoggerMidleware())
-        ->add(new AuthMiddleware('admin'));
-
-    $group->post('/cambiar', \UsuarioController::class . ':ModificarUsuarioController')
-        ->add(new LoggerMidleware())
-        ->add(new AuthMiddleware('admin'));
-
-    $group->get('/guardar', \UsuarioController::class . ':GuardarUsuarios')
-        ->add(new LoggerMidleware())
-        ->add(new AuthMiddleware('admin'));
-        
-    $group->get('/cargar', \UsuarioController::class . ':CargarUsuarios')
-        ->add(new LoggerMidleware())
-        ->add(new AuthMiddleware('admin'));
+$app->group('/cliente', function (RouteCollectorProxy $group)
+{
+    $group->get('[/]', \PedidoController::class . ':TraerPedidoCliente');
+    $group->put('[/]', \PedidoController::class . ':ClienteCalificaPedido');
 });
+//->add(new AuthMW());
 
-
-
-
-$app->group('/productos', function (RouteCollectorProxy $group) {
-    $group->get('[/]', \ProductoController::class . ':TraerProductosController');
-    $group->post('/insertar', \ProductoController::class . ':InsertarProducto');
-    $group->delete('/eliminar', \ProductoController::class . ':BajaProducto');
-    $group->post('/modificar', \ProductoController::class . ':ModificarProductoController');
-});
-
-
-
-$app->group('/mesas', function (RouteCollectorProxy $group) {
-    $group->get('[/]', \MesaController::class . ':TraerMesas');
-    $group->post('/insertar', \MesaController::class . ':InsertMesa');
-    $group->delete('/eliminar', \MesaController::class . ':BajaMesa');
-    $group->post('/modificar', \MesaController::class . ':ModificarMesa');
-});
-
-
-$app->group('/pedidos', function (RouteCollectorProxy $group) {
-    $group->get('[/]', \PedidosController::class . ':TraerPedidos');
-    $group->post('/insertar', \PedidosController::class . ':InsertarPedido');
-    $group->post('/cambiarEstado', \PedidosController::class . ':ModificarEstado');
-    $group->delete('/eliminar', \PedidosController::class . ':BajaPedido');
-    $group->post('/modificar', \PedidosController::class . ':ModificarPedido');
+$app->group('/login', function (RouteCollectorProxy $group)
+{
+    $group->post('[/]', \UsuarioController::class . ':LoginUsuario');
 });
 
 $app->run();

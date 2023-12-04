@@ -2,188 +2,185 @@
 
 require_once './models/Usuario.php';
 
-$directorio = __DIR__;
-
-var_dump($directorio);
-require_once(__DIR__ . '/../utils/autenticadorJWT.php');
-
-class UsuarioController extends Usuario
+class UsuarioController
 {
-
-    public static function InsertarUsuarioController($request, $response, $args)
+    public function CargarUno($request, $response, $args)
     {
-        $parametros = $request->getParsedBody();
 
-        $nombre = $parametros['nombre'];
-        $apellido = $parametros['apellido'];
-        $tipo = $parametros['tipo'];
-        $user = $parametros['user'];
-        $password = $parametros['password'];
+        $params = $request->getParsedBody();
 
+        $nombre = $params['nombre'];
+        $clave = $params['clave'];
+        $mail = $params['mail'];
+        $rol = $params['rol'];
 
-        $usr = new Usuario();
-        $usr->nombre = $nombre;
-        $usr->apellido = $apellido;
-        $usr->tipo = $tipo;
-        $usr->password = $password;
-        $usr->user = $user;
-        $usr->crearUsuario();
+        $newUser = new Usuario();
+        $newUser->nombre = $nombre;
+        $newUser->clave = $clave;
+        $newUser->mail = $mail;
+        $newUser->rol = $rol;
+        $newUser->fechaAlta = date('Y-m-d');
+        $newUser->fechaModificacion = date('Y-m-d');
+        $newUser->estadoDeCuenta = "Activo";
+        $newUser->CrearUsuario();
 
-        $payload = json_encode(array("mensaje" => "Usuario creado con exito"));
+        $payload = json_encode(array("mensaje" => "El usuario se ha creado exitosamente"));
 
         $response->getBody()->write($payload);
+
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-
-
-    public function TraerUsuariosController($request, $response, $args)
+    public function TraerTodos($request, $response, $args)
     {
-        $usuarios = Usuario::TraerUsuarios();
+        $lista = Usuario::ObtenerTodos();
+        $payload = json_encode(array("listaDeUsuarios" => $lista));
 
-        $payload = json_encode(array("listaUsuarios" => $usuarios));
         $response->getBody()->write($payload);
-        return $response
-            ->withHeader('Content-Type', 'application/json');
-    }
 
-
-    public static function EliminarUsuarioController($request, $response, $args)
-    {
-        $parametros = $request->getParsedBody();
-    
-        if (isset($parametros['id'])) {
-            $id = $parametros['id'];
-    
-            var_dump($id);
-            $usuario = Usuario::TraerUsuarioPorId($id);
-    
-            if ($usuario) {
-                if (Usuario::EliminarUsuario($id)) {
-                    $payload = json_encode(array("mensaje" => "Usuario eliminado con exito"));
-                } else {
-                    $payload = json_encode(array("mensaje" => "Error al eliminar usuario"));
-                }
-            } else {
-                $payload = json_encode(array("mensaje" => "Usuario no encontrado"));
-            }
-        } else {
-            $payload = json_encode(array("mensaje" => "ID de usuario no proporcionado"));
-        }
-    
-        $response->getBody()->write($payload);
-        return $response->withHeader("Content-Type", "application/json");
-    }
-
-
-    public static function ModificarUsuarioController($request, $response, $args)
-    {
-        $parametros = $request->getParsedBody();
-        $id = $parametros['id'];
-    
-        $usuario = Usuario::TraerUsuarioPorID($id);
-    
-        if ($usuario !== false) {
-
-            if (isset($parametros['nombre'])) {
-                $usuario->nombre = $parametros['nombre'];
-            } elseif (isset($parametros['apellido'])) {
-                $usuario->apellido = $parametros['apellido'];
-            } elseif (isset($parametros['tipo'])) {
-                $usuario->tipo = $parametros['tipo'];
-            } elseif (isset($parametros['user'])) {
-                $usuario->user = $parametros['user'];
-            } elseif (isset($parametros['password'])) {
-                $usuario->password = $parametros['password'];
-            }
-    
-            Usuario::ModificarUsuario($id, $usuario->nombre, $usuario->apellido, $usuario->tipo, $usuario->user, $usuario->password);
-    
-            $payload = json_encode(array("mensaje" => "Usuario modificado con éxito"));
-        } else {
-            $payload = json_encode(array("mensaje" => "Error en modificar usuario. Usuario no encontrado"));
-        }
-    
-        $response->getBody()->write($payload);
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-
-    public static function login($request, $response, $args)
+    public function ModificarUno($request, $response, $args)
     {
-        $parametros = $request->getParsedBody();
+        $params = $request->getParsedBody();
 
-        $username = $parametros['user'];
-        $contrasenia = $parametros['password'];
-        $usuario = Usuario::TraerUsuarioPorLogin($username, $contrasenia);
+        $idUsuario = $params['idUsuario'];
+        $nombre = $params['nombre'];
+        $clave = $params['clave'];
+        $mail = $params['mail'];
+        $rol = $params['rol'];
+        $fechaAlta = $params['fechaAlta'];
+        
 
-        if ($usuario) {
-            $datos = array('id' => $usuario->id, 'tipo' => $usuario->tipo);
+        if(Usuario::ModificarUsuario($nombre, $clave, $mail, $rol, $fechaAlta, $idUsuario) > 0)
+        {
+            $payload = json_encode(array("mensaje" => "El usuario {$idUsuario} se actualizo correctamente"));
+        }
+        else
+        {
+            $payload = json_encode(array("mensaje" => "No se realizaron modificaciones"));
+        }
+
+
+        $response->getBody()->write($payload);
+
+        return $response->withHeader('Content-Type', 'application/json');
+        
+    }
+
+    public function BorrarUno($request, $response, $args)
+    {
+        $idUsuario = $args['idUsuario'];
+
+        if(Usuario::BorrarUsuario($idUsuario) > 0)
+        {
+            $payload = json_encode(array("mensaje" => "El usuario {$idUsuario} se dio de baja"));
+        }
+        else
+        {
+            $payload = json_encode(array("mensaje" => "No se realizo la baja"));
+        }
+
+        $response->getBody()->write($payload);
+
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function LoginUsuario($request, $response, $args)
+    {
+        $params = $request->getParsedBody();
+
+        $mail = $params['mail'];
+        $clave = $params['clave'];
+
+        $usuario = Usuario::VerificarSiExisteUsuario($mail, $clave);
+
+        if($usuario)
+        {
+            $datos = array('idUsuario' => $usuario->idUsuario, 'rol' => $usuario->rol);
             $token = AutentificadorJWT::CrearToken($datos);
             $payload = json_encode(array('jwt' => $token));
-        } else {
-            $payload = json_encode(array('error' => 'Usuario o contraseña incorrectos'));
+        }
+        else
+        {
+            $payload = json_encode(array("Error" => "El usuario o la clave es incorrecta"));
+        }
+        
+        $response->getBody()->write($payload);
+
+        return $response->withHeader('Content-Type', 'application/json');
+        
+    }
+
+    public function CargarUsuariosEnCSV($request, $response, $args)
+    {
+        $listaDeUsuario = Usuario::ObtenerTodos();
+
+        $archivo = fopen("Usuarios.csv", "w");
+
+        if($archivo != false)
+        {
+            $encabezado = array("IdUsuario", "Nombre", "Clave", "Mail", "Rol", "FechaAlta", "FechaModificacion", "EstadoDeCuenta");
+            fputcsv($archivo, $encabezado);
+            foreach($listaDeUsuario as $usuario)
+            {
+                fputcsv($archivo, 
+                [$usuario->idUsuario, $usuario->nombre, $usuario->clave, $usuario->mail, $usuario->rol, $usuario->fechaAlta, $usuario->fechaModificacion, $usuario->estadoDeCuenta]);
+            }
+
+            $payload = json_encode(array("mensaje" => "Los usuarios se cargaron correctamente en el archivo"));
+        }
+        else
+        {
+            $payload = json_encode(array("mensaje" => "Error al abrir el archivo"));
         }
 
         $response->getBody()->write($payload);
+
+        return $response->withHeader('Content-Type', 'application/json');
+        
+    }
+
+    public function DescargarUsuariosDesdeCSV($request, $response, $args)
+    {
+        $archivo = fopen("Usuarios.csv", "r");
+
+        if($archivo != false)
+        {
+            Usuario::BorrarUsuariosBD();
+
+            fgets($archivo);
+
+            while(($datos = fgetcsv($archivo)) !== false)
+            {
+                $usuario = new Usuario();
+                $usuario->idUsuario = $datos[0];
+                $usuario->nombre = $datos[1];
+                $usuario->clave = $datos[2];
+                $usuario->mail = $datos[3];
+                $usuario->rol = $datos[4];
+                $usuario->fechaAlta = $datos[5];
+                $usuario->fechaModificacion = $datos[6];
+                $usuario->estadoDeCuenta = $datos[7];
+
+                $usuario->CrearUsuario();
+            }
+
+            $payload = json_encode(array("mensaje" => "Los usuarios se descargaron correctamente"));
+
+            fclose($archivo);
+            
+        }
+        else
+        {
+            $payload = json_encode(array("mensaje" => "Error al abrir el archivo"));
+        }
+
+        $response->getBody()->write($payload);
+
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-
-
-    public static function GuardarUsuarios($request, $response, $args){
-        $path = "usuarios.csv";
-        $param = $request->getQueryParams();
-        $usuariosArray = array();
-        $usuarios = Usuario::TraerUsuarios();
-
-        foreach($usuarios as $i){
-            $usuario = array($i->id, $i->nombre, $i->apellido, $i->tipo, $i->user, $i->password, $i->estado);
-            $usuariosArray[] = $usuario;
-        }
-
-        $archivo = fopen($path, "w");
-        $encabezado = array("id", "nombre", "apellido", "tipo", "user", "password", "estado");
-        fputcsv($archivo, $encabezado);
-        foreach($usuariosArray as $fila){
-            fputcsv($archivo, $fila);
-        }
-        fclose($archivo);
-        $retorno = json_encode(array("mensaje"=>"Usuarios guardados en CSV con exito"));
-           
-        $response->getBody()->write($retorno);
-        return $response;
-    }
-
-    public static function CargarUsuarios($request, $response, $args){
-        $path = "usuarios.csv";
-        $archivo = fopen($path, "r");
-        $encabezado = fgets($archivo);
-
-        while(!feof($archivo)){
-            $linea = fgets($archivo);
-            $datos = str_getcsv($linea);
-            var_dump($datos);
-                $usuario = new Usuario();
-                $usuario->id = $datos[0];
-                $usuario->nombre = $datos[1];
-                $usuario->apellido = $datos[2];
-                $usuario->tipo = $datos[3];
-                $usuario->user = $datos[4];
-                $usuario->password = $datos[5];
-                $usuario->estado = $datos[6];
-                $usuario->CrearUsuario();
-        }
-        fclose($archivo);
-                
-        $retorno = json_encode(array("mensaje"=>"Usuarios guardados en base de datos con exito"));
-        $response->getBody()->write($retorno);
-        return $response;
-    }
-
-
-
 }
-
-
 ?>

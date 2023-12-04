@@ -1,99 +1,133 @@
 <?php
 
 require_once './models/Mesa.php';
+
 class MesaController
 {
-    public static function InsertMesa($request, $response, $args)
+    public function CargarUno($request, $response, $args)
     {
-        $parametros = $request->getParsedBody();
+        $params = $request->getParsedBody();
 
-        $estado = $parametros['estado'];
+        $codigoMesa = $params['codigoMesa'];
 
-        $mesa = new Mesa();
-        $mesa->estado = $estado;
+        $newTable = new Mesa();
+        $newTable->codigoMesa = $codigoMesa;
+        $newTable->estadoMesa = "Cerrada";
+        $newTable->fechaAlta = date('Y-m-d');
+        $newTable->fechaModificacion = date('Y-m-d');
+        $newTable->activo = "SI";
+        $newTable->CrearMesa();
 
-        $mesa->CrearMesa();
-
-
-        $payload = json_encode(array("mensaje" => "Mesa creado con exito"));
+        $payload = json_encode(array("mensaje" => "La mesa se ha creado exitosamente"));
 
         $response->getBody()->write($payload);
+
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-
-
-    public static function TraerMesas($request, $response, $args)
+    public function TraerTodos($request, $response, $args)
     {
-        $mesas  = Mesa::TraerMesas();
-        $mesasMap = Mesa::MapearParaMostrar($mesas);
-    
-        $payload = json_encode(array("listaMesas" => $mesasMap));
+        $lista = Mesa::ObtenerTodos();
+        $payload = json_encode(array("listaDeMesas" => $lista));
+
         $response->getBody()->write($payload);
-        return $response
-            ->withHeader('Content-Type', 'application/json');
-    }
 
-
-
-
-    public static function CambiarEstadoMesaPorPedido($id_pedido){
-        $pedido = Pedido::TraerPedidoPorID($id_pedido);
-        $mesa = Mesa::TraerMesaPorID($pedido->idMesa);
-        switch ($pedido->estado) {
-            case "En espera":
-                $estadoMesa = "con cliente esperando pedido";
-                Mesa::CambiarEstadoMesa($mesa->id, $estadoMesa);
-                break;
-            case "En preparacion":
-                $estadoMesa = "con cliente esperando pedido";
-                Mesa::CambiarEstadoMesa($mesa->id, $estadoMesa);
-                break;
-            case "Finalizado":
-                $estadoMesa = "con cliente esperando pedido";
-                Mesa::CambiarEstadoMesa($mesa->id, $estadoMesa);
-                break;
-            case "Entregado":
-                $estadoMesa = "con cliente comiendo";
-                Mesa::CambiarEstadoMesa($mesa->id, $estadoMesa);
-                break;
-        }
-    }
-
-
-
-    public function BajaMesa($request, $response, $args){
-        $parametros = $request->getParsedBody();
-        $id = $parametros['id'];
-        $mesa = Mesa::TraerMesaPorID($id);
-        if($mesa){
-            if(Mesa::EliminarMesa($id)){
-                $payload = json_encode(array("mensaje" => "Mesa eliminado con exito"));
-            }
-        }else{
-            $payload = json_encode(array("mensaje" => "Error en eliminar Mesa"));
-        }
-        $response->getBody()->write($payload);
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-    public function ModificarMesa($request, $response, $args){
-        $parametros = $request->getParsedBody();
-        $id = $parametros['id'];
-        $mesa = Mesa::TraerMesaPorID($id);
-        if($mesa){
-            if (isset($parametros['estado'])){
-                $mesa->estado = $parametros['estado'];
-            }else{
-                $payload = json_encode(array("mensaje" => "Parametros insuficientes"));
-            }
+    public function ModificarUno($request, $response, $args)
+    {
+        $params = $request->getParsedBody();
 
-            Mesa::ModificarMesa($id, $mesa->estado);
-            $payload = json_encode(array("mensaje" => "Mesa modificado con exito"));
-        }else{
-            $payload = json_encode(array("mensaje" => "Error en modificar Mesa"));
+        $codigoMesa = $params['codigoMesa'];
+        $estadoMesa = $params['estadoMesa'];
+
+        $idMesa = Mesa::ObtenerIdMesaPorCodigo($codigoMesa);
+
+        if(Mesa::ModificarMesa($idMesa, $codigoMesa, $estadoMesa) > 0)
+        {
+            $payload = json_encode(array("mensaje" => "La mesa {$idMesa} se actualizo correctamente"));
         }
+        else
+        {
+            $payload = json_encode(array("mensaje" => "La mesa no se actualizo"));
+        }
+
         $response->getBody()->write($payload);
+
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function SocioCierraMesa($request, $response, $args)
+    {
+        $params = $request->getParsedBody();
+
+        $codigoMesa = $params['codigoMesa'];
+
+
+        if(Mesa::CerrarMesa($codigoMesa) > 0)
+        {
+            $payload = json_encode(array("mensaje" => "La mesa {$codigoMesa} se cerro correctamente"));
+        }
+        else
+        {
+            $payload = json_encode(array("mensaje" => "La mesa no se actualizo"));
+        }
+
+        $response->getBody()->write($payload);
+
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function BorrarUno($request, $response, $args)
+    {
+        $idMesa = $args['idMesa'];
+
+        if(Mesa::BorrarMesa($idMesa) > 0)
+        {
+            $payload = json_encode(array("mensaje" => "La mesa {$idMesa} se dio de baja"));
+        }
+        else
+        {
+            $payload = json_encode(array("mensaje" => "No se realizo la baja"));
+        }
+
+        $response->getBody()->write($payload);
+
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function TraerMesaMasUsada($request, $response, $args)
+    {
+        $pedidos = Pedido::ObtenerTodos();
+
+        $mesaMasUsada = Mesa::ObtenerMesaMasUsada($pedidos);
+
+        if($mesaMasUsada)
+        {
+            $payload = json_encode(array("Mesa Mas Usada" => $mesaMasUsada));
+        }
+        else
+        {
+            $payload = json_encode(array("No se encontro una mesa mas utilizada"));
+        }
+        
+
+        $response->getBody()->write($payload);
+
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function TraerMejoresComentarios($request, $response, $args)
+    {
+        $pedidos = Pedido::ObtenerTodos();
+
+        $mejoresComentarios = Mesa::ObtenerMejoresComentarios($pedidos);
+
+        $payload = json_encode(array("Los mejores comentarios son" => $mejoresComentarios));
+
+        $response->getBody()->write($payload);
+
         return $response->withHeader('Content-Type', 'application/json');
     }
 }
