@@ -35,8 +35,6 @@ $app->addErrorMiddleware(true, true, true);
 $app->addBodyParsingMiddleware();
 
 
-
-
 $app->group('/usuarios', function (RouteCollectorProxy $group)
 {
     $group->get('[/]', \UsuarioController::class . ':TraerTodos')->add(new AuthSocioMW());
@@ -60,15 +58,14 @@ $app->group('/mesas', function (RouteCollectorProxy $group)
 
 $app->group('/productos', function (RouteCollectorProxy $group)
 {
-    $group->get('[/]', \ProductoController::class . ':TraerTodos'); //->add(new AuthMozoMW());
+    $group->get('[/]', \ProductoController::class . ':TraerTodos')->add(new AuthMozoMW());
     $group->get('/TraerTodosSegunEstado', \ProductoController::class . ':TraerProductosSegunEstado');
-    $group->post('[/]', \ProductoController::class . ':CargarUno'); //->add(new AuthMozoMW());
-    $group->put('[/]', \ProductoController::class . ':ModificarUno');//->add(new AuthMozoMW());
-    $group->put('/EmpleadoTomaProducto', \ProductoController::class . ':EmpleadoTomaProducto');//->add(new EstadoYTiempoProductoMW());
-    $group->put('/EmpleadoAlistaProducto', \ProductoController::class . ':EmpleadoAlistaProducto');//->add(new EstadoYTiempoProductoMW());
-    $group->delete('[/{idProducto}]', \ProductoController::class . ':BorrarUno');//->add(new AuthSocioMW());
-});
-//->add(new AuthMW());
+    $group->post('[/]', \ProductoController::class . ':CargarUno')->add(new AuthMozoMW());
+    $group->put('[/]', \ProductoController::class . ':ModificarUno')->add(new AuthMozoMW());
+    $group->put('/EmpleadoTomaProducto', \ProductoController::class . ':EmpleadoTomaProducto')->add(new EstadoYTiempoProductoMW());
+    $group->put('/EmpleadoAlistaProducto', \ProductoController::class . ':EmpleadoAlistaProducto')->add(new EstadoYTiempoProductoMW());
+    $group->delete('[/{idProducto}]', \ProductoController::class . ':BorrarUno')->add(new AuthSocioMW());
+})->add(new AuthMW());
 
 $app->group('/pedidos', function (RouteCollectorProxy $group)
 {
@@ -78,15 +75,14 @@ $app->group('/pedidos', function (RouteCollectorProxy $group)
     $group->put('[/]', \PedidoController::class . ':ModificarUno');
     $group->put('/MozoPedidoCliente', \PedidoController::class . ':MozoPedidoCliente');
     $group->delete('[/{idPedido}]', \PedidoController::class . ':BorrarUno');
-});
-//->add(new AuthMW())->add(new AuthMozoMW());
+})->add(new AuthMW())->add(new AuthMozoMW());
+
 
 $app->group('/cliente', function (RouteCollectorProxy $group)
 {
     $group->get('[/]', \PedidoController::class . ':TraerPedidoCliente');
     $group->put('[/]', \PedidoController::class . ':ClienteCalificaPedido');
-});
-//->add(new AuthMW());
+})->add(new AuthMW());
 
 $app->group('/login', function (RouteCollectorProxy $group)
 {
